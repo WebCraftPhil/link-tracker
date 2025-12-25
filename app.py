@@ -1,5 +1,6 @@
 import os
 import sqlite3
+import ipaddress
 from datetime import datetime
 from flask import Flask, request, redirect, render_template, jsonify, url_for, g
 import shortuuid
@@ -46,7 +47,6 @@ def init_db():
             )
         ''')
         db.commit()
-        db.close()
 
 def generate_short_code(length=6):
     """Generate a unique short code"""
@@ -69,10 +69,6 @@ def shorten_url():
         # Add http:// if no scheme is provided
         if not original_url.startswith(('http://', 'https://')):
             original_url = 'http://' + original_url
-        
-        # Basic URL validation to prevent malicious URLs
-        if not original_url.startswith(('http://', 'https://')):
-            return jsonify({'error': 'Invalid URL scheme'}), 400
         
         db = get_db()
         
@@ -123,14 +119,19 @@ def redirect_url(short_code):
     # Track click (anonymize IP for privacy)
     ip_address = request.remote_addr or 'unknown'
     if ip_address != 'unknown':
-        # Handle IPv4 and IPv6 addresses (IPv6 addresses contain multiple colons)
-        if ip_address.count(':') >= 2:
-            # IPv6: anonymize last segment
-            parts = ip_address.rsplit(':', 1)
-            anonymized_ip = parts[0] + ':xxxx'
-        else:
-            # IPv4: anonymize last octet
-            anonymized_ip = ip_address.rsplit('.', 1)[0] + '.xxx'
+        try:
+            # Use ipaddress module for proper IP type detection
+            ip_obj = ipaddress.ip_address(ip_address)
+            if isinstance(ip_obj, ipaddress.IPv6Address):
+                # IPv6: anonymize last segment
+                parts = ip_address.rsplit(':', 1)
+                anonymized_ip = parts[0] + ':xxxx'
+            else:
+                # IPv4: anonymize last octet
+                anonymized_ip = ip_address.rsplit('.', 1)[0] + '.xxx'
+        except ValueError:
+            # Invalid IP address format
+            anonymized_ip = 'invalid'
     else:
         anonymized_ip = 'unknown'
     
