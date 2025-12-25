@@ -1,7 +1,7 @@
 import os
 import sqlite3
 from datetime import datetime
-from flask import Flask, request, redirect, render_template, jsonify, url_for
+from flask import Flask, request, redirect, render_template, jsonify, url_for, g
 import shortuuid
 
 app = Flask(__name__)
@@ -10,14 +10,15 @@ DATABASE = 'database.db'
 
 def get_db():
     """Get database connection"""
-    db = sqlite3.connect(DATABASE)
-    db.row_factory = sqlite3.Row
-    return db
+    if '_database' not in g:
+        g._database = sqlite3.connect(DATABASE)
+        g._database.row_factory = sqlite3.Row
+    return g._database
 
 @app.teardown_appcontext
 def close_connection(exception):
     """Close database connection at end of request"""
-    db = getattr(app, '_database', None)
+    db = g.pop('_database', None)
     if db is not None:
         db.close()
 
@@ -95,9 +96,8 @@ def shorten_url():
                       (short_code, original_url))
             db.commit()
         
-        db.close()
-        
         short_url = request.host_url + short_code
+        db.close()
         
         if request.is_json:
             return jsonify({'original_url': original_url, 'short_code': short_code})
@@ -123,7 +123,19 @@ def redirect_url(short_code):
         return render_template('404.html'), 404
     
     # Track click (anonymize IP for privacy)
-    anonymized_ip = request.remote_addr.rsplit('.', 1)[0] + '.xxx' if request.remote_addr else 'unknown'
+    ip_address = request.remote_addr or 'unknown'
+    if ip_address != 'unknown':
+        # Handle IPv4 and IPv6 addresses
+        if ':' in ip_address:
+            # IPv6: anonymize last segment
+            parts = ip_address.rsplit(':', 1)
+            anonymized_ip = parts[0] + ':xxxx'
+        else:
+            # IPv4: anonymize last octet
+            anonymized_ip = ip_address.rsplit('.', 1)[0] + '.xxx'
+    else:
+        anonymized_ip = 'unknown'
+    
     db.execute('''
         INSERT INTO clicks (link_id, ip_address, user_agent, referrer)
         VALUES (?, ?, ?, ?)
