@@ -97,7 +97,6 @@ def shorten_url():
             db.commit()
         
         short_url = request.host_url + short_code
-        db.close()
         
         if request.is_json:
             return jsonify({'original_url': original_url, 'short_code': short_code})
@@ -119,14 +118,13 @@ def redirect_url(short_code):
                      (short_code,)).fetchone()
     
     if not link:
-        db.close()
         return render_template('404.html'), 404
     
     # Track click (anonymize IP for privacy)
     ip_address = request.remote_addr or 'unknown'
     if ip_address != 'unknown':
-        # Handle IPv4 and IPv6 addresses
-        if ':' in ip_address:
+        # Handle IPv4 and IPv6 addresses (IPv6 addresses contain multiple colons)
+        if ip_address.count(':') >= 2:
             # IPv6: anonymize last segment
             parts = ip_address.rsplit(':', 1)
             anonymized_ip = parts[0] + ':xxxx'
@@ -144,7 +142,6 @@ def redirect_url(short_code):
           request.headers.get('User-Agent'),
           request.headers.get('Referer')))
     db.commit()
-    db.close()
     
     return redirect(link['original_url'])
 
@@ -179,7 +176,6 @@ def api_analytics():
             'click_count': link['click_count']
         })
     
-    db.close()
     return jsonify(result)
 
 @app.route('/api/analytics/<short_code>')
@@ -192,7 +188,6 @@ def api_analytics_detail(short_code):
                      (short_code,)).fetchone()
     
     if not link:
-        db.close()
         return jsonify({'error': 'Link not found'}), 404
     
     # Get clicks
@@ -221,7 +216,6 @@ def api_analytics_detail(short_code):
         'clicks': click_list
     }
     
-    db.close()
     return jsonify(result)
 
 if __name__ == '__main__':
