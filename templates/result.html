@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortened - Link Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+            text-align: center;
+        }
+        
+        .success-icon {
+            text-align: center;
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+        
+        .url-box {
+            background: #f5f5f5;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .url-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .url-value {
+            color: #333;
+            font-size: 1.2em;
+            word-break: break-all;
+            font-weight: 600;
+        }
+        
+        .short-url {
+            color: #667eea;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        button, .btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+            border: 2px solid #e0e0e0;
+        }
+        
+        button:hover, .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:active, .btn:active {
+            transform: translateY(0);
+        }
+        
+        .copy-message {
+            text-align: center;
+            color: #28a745;
+            margin-top: 10px;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .copy-message.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-icon">✅</div>
+        <h1>URL Shortened Successfully!</h1>
+        
+        <div class="url-box">
+            <div class="url-label">Original URL:</div>
+            <div class="url-value">{{ original_url }}</div>
+        </div>
+        
+        <div class="url-box">
+            <div class="url-label">Short URL:</div>
+            <div class="url-value short-url" id="shortUrl">{{ short_url }}</div>
+        </div>
+        
+        <div class="button-group">
+            <button class="btn-primary" onclick="copyToClipboard()">📋 Copy Link</button>
+            <a href="/" class="btn btn-secondary">🔗 Shorten Another</a>
+        </div>
+        
+        <div class="copy-message" id="copyMessage">Copied to clipboard!</div>
+    </div>
+    
+    <script>
+        function copyToClipboard() {
+            const shortUrl = document.getElementById('shortUrl').textContent;
+            navigator.clipboard.writeText(shortUrl).then(() => {
+                const message = document.getElementById('copyMessage');
+                message.classList.add('show');
+                setTimeout(() => {
+                    message.classList.remove('show');
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
