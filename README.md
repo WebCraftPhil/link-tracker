@@ -152,6 +152,7 @@ This project follows PEP 8 style guidelines for Python code.
 
 - `FLASK_ENV`: Flask environment (development/production/testing)
 - `SECRET_KEY`: Secret key for Flask sessions (change in production)
+- `HOST`: Host address to bind to (default: 127.0.0.1 in development, 0.0.0.0 in production)
 - `PORT`: Port number for the application (default: 5000)
 - `DATABASE`: SQLite database file path (default: link_tracker.db)
 
