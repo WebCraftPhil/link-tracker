@@ -1,3 +1,19 @@
+# link-tracker
+
+A URL shortener and analytics tracker built with Python Flask, Jupyter Notebook, and SQLite.
+
+## Features
+
+- 🔗 **URL Shortening**: Create short, easy-to-share links
+- 📊 **Analytics Dashboard**: Track clicks, referrers, and user agents in real-time
+- 📈 **Data Visualization**: Jupyter Notebook with detailed analytics and visualizations
+- 💾 **SQLite Database**: Lightweight database for storing links and click data
+- 🎨 **Modern UI**: Beautiful, responsive web interface
+- 🔒 **Click Tracking**: Capture IP addresses, user agents, referrers, and timestamps
+
+## Installation
+
+### Prerequisites
 # Link Tracker
 
 A URL shortener and analytics tracker application built with Flask and SQLite.
@@ -14,6 +30,9 @@ A URL shortener and analytics tracker application built with Flask and SQLite.
 - Python 3.8 or higher
 - pip (Python package installer)
 
+### Setup
+
+1. Clone the repository:
 ## Setup Instructions
 
 ### 1. Clone the Repository
@@ -23,6 +42,92 @@ git clone https://github.com/WebCraftPhil/link-tracker.git
 cd link-tracker
 ```
 
+2. Create a virtual environment (recommended):
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+3. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+## Usage
+
+### Running the Flask Application
+
+Start the Flask web server:
+
+```bash
+python app.py
+```
+
+The application will be available at `http://localhost:5000`
+
+**Note:** The application runs in debug mode for development purposes. For production deployment, use a production WSGI server like Gunicorn:
+
+```bash
+pip install gunicorn
+gunicorn -w 4 -b 0.0.0.0:5000 app:app
+```
+
+### Web Interface
+
+- **Home Page** (`/`): Create shortened URLs
+- **Analytics Dashboard** (`/analytics`): View statistics and link performance
+- **Redirect** (`/<short_code>`): Automatically redirects to the original URL
+
+### API Endpoints
+
+#### Shorten URL
+```bash
+POST /shorten
+Content-Type: application/json
+
+{
+  "url": "https://example.com/very/long/url"
+}
+
+Response:
+{
+  "short_url": "http://localhost:5000/abc12345",
+  "short_code": "abc12345"
+}
+```
+
+#### Get All Analytics
+```bash
+GET /api/analytics
+
+Response: Array of link objects with click counts
+```
+
+#### Get Detailed Analytics for a Link
+```bash
+GET /api/analytics/<short_code>
+
+Response: Detailed analytics including all clicks
+```
+
+### Jupyter Notebook Analytics
+
+Launch Jupyter Notebook for advanced analytics:
+
+```bash
+jupyter notebook analytics.ipynb
+```
+
+The notebook includes:
+- Overview statistics
+- Top clicked links
+- Click distribution over time
+- Hourly click patterns
+- Referrer analysis
+- Browser/User agent analysis
+- Unique visitor tracking
+- Recent activity logs
+- Export functionality for CSV reports
 ### 2. Create Virtual Environment
 
 ```bash
@@ -118,56 +223,85 @@ link-tracker/
 ## Database Schema
 
 ### Links Table
-Stores shortened URLs and metadata:
 - `id`: Primary key
 - `short_code`: Unique short code for the URL
 - `original_url`: The original long URL
-- `created_at`: Timestamp of creation
-- `expires_at`: Optional expiration timestamp
-- `is_active`: Boolean flag for active links
-- `description`: Optional description
+- `created_at`: Timestamp when the link was created
 
-### Analytics Table
-Tracks click events and visitor information:
+### Clicks Table
 - `id`: Primary key
 - `link_id`: Foreign key to links table
-- `visited_at`: Timestamp of the visit
-- `ip_address`: Visitor IP address
-- `user_agent`: Browser user agent
-- `referrer`: HTTP referrer
+- `clicked_at`: Timestamp of the click
+- `ip_address`: IP address of the visitor
+- `user_agent`: Browser/device information
+- `referrer`: Source URL (if available)
+
+## Project Structure
+
+```
+link-tracker/
+├── app.py                  # Main Flask application
+├── analytics.ipynb         # Jupyter Notebook for analytics
+├── requirements.txt        # Python dependencies
+├── link_tracker.db        # SQLite database (created on first run)
+├── templates/             # HTML templates
+│   ├── index.html         # Home page
+│   ├── result.html        # Success page after shortening
+│   ├── analytics.html     # Analytics dashboard
+│   └── 404.html          # Error page
+└── README.md             # This file
+```
+
+## Technologies Used
+
+- **Flask**: Web framework for Python
+- **SQLite**: Lightweight database
+- **shortuuid**: Generate unique short codes
+- **Pandas**: Data manipulation and analysis
+- **Matplotlib & Seaborn**: Data visualization
+- **Jupyter Notebook**: Interactive analytics environment
 
 ## Development
 
-### Running Tests
+### Adding New Features
 
-```bash
-pytest
-```
+The application is designed to be easily extensible:
 
-### Code Style
+- Add new routes in `app.py`
+- Create new templates in the `templates/` directory
+- Extend database schema by modifying the `init_db()` function
+- Add visualizations in `analytics.ipynb`
 
-This project follows PEP 8 style guidelines for Python code.
+### Security Considerations
 
-## Environment Variables
+This is a basic implementation. For production use, consider:
 
-- `FLASK_ENV`: Flask environment (development/production/testing)
-- `SECRET_KEY`: Secret key for Flask sessions (change in production)
-- `HOST`: Host address to bind to (default: 127.0.0.1 in development, 0.0.0.0 in production)
-- `PORT`: Port number for the application (default: 5000)
-- `DATABASE`: SQLite database file path (default: link_tracker.db)
+- Adding rate limiting to prevent abuse
+- Implementing user authentication
+- Validating and sanitizing URLs
+- Adding HTTPS support
+- Implementing link expiration
+- Adding custom short codes
+- Blacklisting malicious URLs
+- Adding CAPTCHA for URL submission
+- Implementing proper session management
 
-## Contributing
+## Privacy
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+The application implements basic privacy measures:
+
+- IP addresses are anonymized (last octet replaced with "xxx")
+- No personally identifiable information is collected beyond anonymized IPs and user agents
+- For production use, implement:
+  - User consent mechanisms
+  - GDPR compliance features
+  - Data retention policies
+  - Right to deletion functionality
 
 ## License
 
-This project is licensed under the terms in the LICENSE file.
+See the [LICENSE](LICENSE) file for details.
 
-## Support
+## Contributing
 
-For issues and questions, please open an issue on the GitHub repository.
+Contributions are welcome! Please feel free to submit a Pull Request.
