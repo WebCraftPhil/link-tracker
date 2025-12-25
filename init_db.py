@@ -7,7 +7,7 @@ import sqlite3
 import os
 
 
-def init_database(db_path='link_tracker.db', schema_path='schema.sql'):
+def init_database(db_path='database.db', schema_path='schema.sql'):
     """
     Initialize the SQLite database using the schema file.
     
@@ -39,7 +39,7 @@ def init_database(db_path='link_tracker.db', schema_path='schema.sql'):
 
 if __name__ == '__main__':
     # Get database path from environment or use default
-    db_path = os.environ.get('DATABASE', 'link_tracker.db')
+    db_path = os.environ.get('DATABASE', 'database.db')
     
     # Initialize the database
     init_database(db_path)
