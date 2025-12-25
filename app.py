@@ -99,7 +99,7 @@ def shorten_url():
         short_url = request.host_url + short_code
         
         if request.is_json:
-            return jsonify({'original_url': original_url, 'short_code': short_code})
+            return jsonify({'original_url': original_url, 'short_code': short_code, 'short_url': short_url})
         else:
             return render_template('result.html', short_url=short_url, original_url=original_url)
     
@@ -153,6 +153,30 @@ def redirect_url(short_code):
     db.commit()
     
     return redirect(link['original_url'])
+
+@app.route('/stats')
+def stats():
+    """Get stats for the dashboard table"""
+    db = get_db()
+    # SQL Query: Join links with clicks to count them
+    # This is a classic "Left Join" aggregation you'd see in Data Science interviews
+    query = """
+        SELECT l.short_code, l.original_url, COUNT(c.id) as click_count
+        FROM links l
+        LEFT JOIN clicks c ON l.id = c.link_id
+        GROUP BY l.id
+        ORDER BY click_count DESC
+    """
+    rows = db.execute(query).fetchall()
+    
+    # Convert database rows to a list of dictionaries (JSON)
+    links_data = [
+        {'short_code': row['short_code'], 
+         'original_url': row['original_url'], 
+         'click_count': row['click_count']} 
+        for row in rows
+    ]
+    return jsonify(links_data)
 
 @app.route('/analytics')
 def analytics():
