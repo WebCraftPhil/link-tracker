@@ -45,33 +45,52 @@
             e.preventDefault();
             const url = document.getElementById('url').value;
             
-            const response = await fetch('/shorten', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({url: url})
-            });
-            
-            const data = await response.json();
-            document.getElementById('result').innerHTML = `
-                Success! Your link: <a href="${data.short_url}" target="_blank">${data.short_url}</a>
-            `;
-            loadStats(); // Refresh table
+            try {
+                const response = await fetch('/shorten', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({url: url})
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to shorten URL');
+                }
+                
+                const data = await response.json();
+                document.getElementById('result').innerHTML = `
+                    Success! Your link: <a href="${data.short_url}" target="_blank">${data.short_url}</a>
+                `;
+                loadStats(); // Refresh table
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <strong>Error:</strong> ${error.message}
+                `;
+            }
         };
 
         // 2. Fetch and Display Stats
         async function loadStats() {
-            const response = await fetch('/stats');
-            const links = await response.json();
-            
-            const tbody = document.getElementById('statsTable');
-            tbody.innerHTML = links.map(link => `
-                <tr>
-                    <td><a href="/${link.short_code}" target="_blank">${link.short_code}</a></td>
-                    <td>${link.original_url.substring(0, 50)}...</td>
-                    <td><strong>${link.click_count}</strong></td>
-                    <td><a href="/${link.short_code}" role="button" class="outline">Test</a></td>
-                </tr>
-            `).join('');
+            try {
+                const response = await fetch('/stats');
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load stats');
+                }
+                
+                const links = await response.json();
+                
+                const tbody = document.getElementById('statsTable');
+                tbody.innerHTML = links.map(link => `
+                    <tr>
+                        <td><a href="/${link.short_code}" target="_blank">${link.short_code}</a></td>
+                        <td>${link.original_url.length > 50 ? link.original_url.substring(0, 50) + '...' : link.original_url}</td>
+                        <td><strong>${link.click_count}</strong></td>
+                        <td><a href="/${link.short_code}" role="button" class="outline">Test</a></td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
         }
 
         // Load stats on page load
