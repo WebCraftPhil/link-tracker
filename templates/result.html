@@ -149,13 +149,42 @@
     <script>
         function copyToClipboard() {
             const shortUrl = document.getElementById('shortUrl').textContent;
-            navigator.clipboard.writeText(shortUrl).then(() => {
+            
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(shortUrl).then(() => {
+                    const message = document.getElementById('copyMessage');
+                    message.classList.add('show');
+                    setTimeout(() => {
+                        message.classList.remove('show');
+                    }, 2000);
+                }).catch(err => {
+                    // Fallback: select text for manual copy
+                    fallbackCopy(shortUrl);
+                });
+            } else {
+                // Fallback for older browsers
+                fallbackCopy(shortUrl);
+            }
+        }
+        
+        function fallbackCopy(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.opacity = '0';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
                 const message = document.getElementById('copyMessage');
                 message.classList.add('show');
                 setTimeout(() => {
                     message.classList.remove('show');
                 }, 2000);
-            });
+            } catch (err) {
+                alert('Unable to copy. Please copy manually: ' + text);
+            }
+            document.body.removeChild(textArea);
         }
     </script>
 </body>

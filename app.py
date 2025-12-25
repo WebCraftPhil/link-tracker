@@ -60,6 +60,10 @@ def shorten_url():
     if not original_url.startswith(('http://', 'https://')):
         original_url = 'http://' + original_url
     
+    # Basic URL validation to prevent malicious URLs
+    if not original_url.startswith(('http://', 'https://')):
+        return jsonify({'error': 'Invalid URL scheme'}), 400
+    
     db = get_db()
     
     # Check if URL already exists
@@ -104,12 +108,13 @@ def redirect_url(short_code):
         db.close()
         return render_template('404.html'), 404
     
-    # Track click
+    # Track click (anonymize IP for privacy)
+    anonymized_ip = request.remote_addr.rsplit('.', 1)[0] + '.xxx' if request.remote_addr else 'unknown'
     db.execute('''
         INSERT INTO clicks (link_id, ip_address, user_agent, referrer)
         VALUES (?, ?, ?, ?)
     ''', (link['id'], 
-          request.remote_addr,
+          anonymized_ip,
           request.headers.get('User-Agent'),
           request.headers.get('Referer')))
     db.commit()
@@ -195,4 +200,6 @@ def api_analytics_detail(short_code):
 
 if __name__ == '__main__':
     init_db()
+    # Debug mode should only be used in development
+    # For production, use a WSGI server like Gunicorn or uWSGI
     app.run(debug=True, host='0.0.0.0', port=5000)

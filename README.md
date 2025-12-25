@@ -49,6 +49,13 @@ python app.py
 
 The application will be available at `http://localhost:5000`
 
+**Note:** The application runs in debug mode for development purposes. For production deployment, use a production WSGI server like Gunicorn:
+
+```bash
+pip install gunicorn
+gunicorn -w 4 -b 0.0.0.0:5000 app:app
+```
+
 ### Web Interface
 
 - **Home Page** (`/`): Create shortened URLs
@@ -169,6 +176,20 @@ This is a basic implementation. For production use, consider:
 - Implementing link expiration
 - Adding custom short codes
 - Blacklisting malicious URLs
+- Adding CAPTCHA for URL submission
+- Implementing proper session management
+
+## Privacy
+
+The application implements basic privacy measures:
+
+- IP addresses are anonymized (last octet replaced with "xxx")
+- No personally identifiable information is collected beyond anonymized IPs and user agents
+- For production use, implement:
+  - User consent mechanisms
+  - GDPR compliance features
+  - Data retention policies
+  - Right to deletion functionality
 
 ## License
 
