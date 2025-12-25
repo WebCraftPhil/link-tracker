@@ -1,0 +1,14 @@
+# Flask URL Shortener and Analytics Tracker Dependencies
+
+# Core Framework
+Flask==3.0.0
+
+# WSGI Server for production
+Werkzeug==3.0.1
+
+# Environment variable management
+python-dotenv==1.0.0
+
+# Development and testing dependencies
+pytest==7.4.3
+pytest-flask==1.3.0
