@@ -10,7 +10,17 @@ from flask import Flask, jsonify
 app = Flask(__name__)
 
 # Load configuration from environment variables
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+secret_key = os.environ.get('SECRET_KEY')
+if not secret_key:
+    # Only use default in development, warn in production
+    flask_env = os.environ.get('FLASK_ENV', 'production')
+    if flask_env == 'development':
+        secret_key = 'dev-secret-key-change-in-production'
+        print("WARNING: Using default SECRET_KEY for development. Set SECRET_KEY environment variable for production.")
+    else:
+        raise ValueError("SECRET_KEY environment variable must be set in production")
+
+app.config['SECRET_KEY'] = secret_key
 app.config['DATABASE'] = os.environ.get('DATABASE', 'link_tracker.db')
 
 
