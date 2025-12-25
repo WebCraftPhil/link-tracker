@@ -11,9 +11,10 @@ app = Flask(__name__)
 
 # Load configuration from environment variables
 secret_key = os.environ.get('SECRET_KEY')
+flask_env = os.environ.get('FLASK_ENV', 'development')
+
 if not secret_key:
     # Only use default in development, warn in production
-    flask_env = os.environ.get('FLASK_ENV', 'production')
     if flask_env == 'development':
         secret_key = 'dev-secret-key-change-in-production'
         print("WARNING: Using default SECRET_KEY for development. Set SECRET_KEY environment variable for production.")
@@ -49,9 +50,14 @@ def health():
 
 if __name__ == '__main__':
     # Run the application
-    debug_mode = os.environ.get('FLASK_ENV') == 'development'
+    flask_env = os.environ.get('FLASK_ENV', 'development')
+    debug_mode = flask_env == 'development'
+    
+    # Use 127.0.0.1 for development, 0.0.0.0 for production (or override via HOST env var)
+    host = os.environ.get('HOST', '127.0.0.1' if flask_env == 'development' else '0.0.0.0')
+    
     app.run(
-        host='0.0.0.0',
+        host=host,
         port=int(os.environ.get('PORT', 5000)),
         debug=debug_mode
     )
