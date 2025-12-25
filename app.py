@@ -5,13 +5,21 @@ from flask import Flask, request, redirect, render_template, jsonify, url_for
 import shortuuid
 
 app = Flask(__name__)
-app.config['DATABASE'] = 'link_tracker.db'
+
+DATABASE = 'database.db'
 
 def get_db():
     """Get database connection"""
-    db = sqlite3.connect(app.config['DATABASE'])
+    db = sqlite3.connect(DATABASE)
     db.row_factory = sqlite3.Row
     return db
+
+@app.teardown_appcontext
+def close_connection(exception):
+    """Close database connection at end of request"""
+    db = getattr(app, '_database', None)
+    if db is not None:
+        db.close()
 
 def init_db():
     """Initialize the database"""
@@ -39,9 +47,9 @@ def init_db():
         db.commit()
         db.close()
 
-def generate_short_code():
+def generate_short_code(length=6):
     """Generate a unique short code"""
-    return shortuuid.uuid()[:8]
+    return shortuuid.uuid()[:length]
 
 @app.route('/')
 def index():
@@ -51,49 +59,55 @@ def index():
 @app.route('/shorten', methods=['POST'])
 def shorten_url():
     """Shorten a URL"""
-    original_url = request.form.get('url') or request.json.get('url')
-    
-    if not original_url:
-        return jsonify({'error': 'URL is required'}), 400
-    
-    # Add http:// if no scheme is provided
-    if not original_url.startswith(('http://', 'https://')):
-        original_url = 'http://' + original_url
-    
-    # Basic URL validation to prevent malicious URLs
-    if not original_url.startswith(('http://', 'https://')):
-        return jsonify({'error': 'Invalid URL scheme'}), 400
-    
-    db = get_db()
-    
-    # Check if URL already exists
-    existing = db.execute('SELECT short_code FROM links WHERE original_url = ?', 
-                         (original_url,)).fetchone()
-    
-    if existing:
-        short_code = existing['short_code']
-    else:
-        # Generate unique short code
-        while True:
-            short_code = generate_short_code()
-            exists = db.execute('SELECT id FROM links WHERE short_code = ?', 
-                              (short_code,)).fetchone()
-            if not exists:
-                break
+    try:
+        original_url = request.form.get('url') or request.json.get('url')
         
-        # Insert new link
-        db.execute('INSERT INTO links (short_code, original_url) VALUES (?, ?)',
-                  (short_code, original_url))
-        db.commit()
+        if not original_url:
+            return jsonify({'error': 'URL is required'}), 400
+        
+        # Add http:// if no scheme is provided
+        if not original_url.startswith(('http://', 'https://')):
+            original_url = 'http://' + original_url
+        
+        # Basic URL validation to prevent malicious URLs
+        if not original_url.startswith(('http://', 'https://')):
+            return jsonify({'error': 'Invalid URL scheme'}), 400
+        
+        db = get_db()
+        
+        # Check if URL already exists
+        existing = db.execute('SELECT short_code FROM links WHERE original_url = ?', 
+                             (original_url,)).fetchone()
+        
+        if existing:
+            short_code = existing['short_code']
+        else:
+            # Generate unique short code
+            while True:
+                short_code = generate_short_code(length=6)
+                exists = db.execute('SELECT id FROM links WHERE short_code = ?', 
+                                  (short_code,)).fetchone()
+                if not exists:
+                    break
+            
+            # Insert new link
+            db.execute('INSERT INTO links (short_code, original_url) VALUES (?, ?)',
+                      (short_code, original_url))
+            db.commit()
+        
+        db.close()
+        
+        short_url = request.host_url + short_code
+        
+        if request.is_json:
+            return jsonify({'original_url': original_url, 'short_code': short_code})
+        else:
+            return render_template('result.html', short_url=short_url, original_url=original_url)
     
-    db.close()
-    
-    short_url = request.host_url + short_code
-    
-    if request.is_json:
-        return jsonify({'short_url': short_url, 'short_code': short_code})
-    else:
-        return render_template('result.html', short_url=short_url, original_url=original_url)
+    except sqlite3.Error as e:
+        return jsonify({'error': f'Database error: {str(e)}'}), 500
+    except Exception as e:
+        return jsonify({'error': f'An error occurred: {str(e)}'}), 500
 
 @app.route('/<short_code>')
 def redirect_url(short_code):
