@@ -80,12 +80,16 @@ def shorten_url():
             short_code = existing['short_code']
         else:
             # Generate unique short code
-            while True:
+            max_retries = 10
+            for _ in range(max_retries):
                 short_code = generate_short_code(length=6)
                 exists = db.execute('SELECT id FROM links WHERE short_code = ?', 
                                   (short_code,)).fetchone()
                 if not exists:
                     break
+            else:
+                # Could not generate unique code after max_retries
+                return jsonify({'error': 'Unable to generate unique short code, please try again'}), 500
             
             # Insert new link
             db.execute('INSERT INTO links (short_code, original_url) VALUES (?, ?)',
@@ -100,9 +104,13 @@ def shorten_url():
             return render_template('result.html', short_url=short_url, original_url=original_url)
     
     except sqlite3.Error as e:
-        return jsonify({'error': f'Database error: {str(e)}'}), 500
+        # Log the full error for debugging
+        app.logger.error(f'Database error: {str(e)}')
+        return jsonify({'error': 'A database error occurred'}), 500
     except Exception as e:
-        return jsonify({'error': f'An error occurred: {str(e)}'}), 500
+        # Log the full error for debugging
+        app.logger.error(f'Unexpected error: {str(e)}')
+        return jsonify({'error': 'An unexpected error occurred'}), 500
 
 @app.route('/<short_code>')
 def redirect_url(short_code):
